@@ -1,0 +1,22 @@
+{
+  "name": "buku-penerimaan",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "next": "16.0.8",
+    "pdf-lib": "^1.17.1",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "react-signature-canvas": "^1.1.0-alpha.2"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "16.0.8"
+  }
+}
