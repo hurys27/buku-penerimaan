@@ -160,41 +160,15 @@ export default function Home() {
           Kirim
         </button>
 
-                {/* FIX MOBILE COLOR INVERSION */}
+        {/* SIMPLE INPUT CSS */}
         <style>{`
-          :root {
-            color-scheme: light !important;
-          }
-
-          body, input, label, p, h2 {
-            color: #222 !important;
-            background: transparent !important;
-          }
-
           .input {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background: #f9faff !important;
-            color: #222 !important;
-          }
-
-          label {
-            color: #333 !important;
-          }
-
-          h2 {
-            color: #222 !important;
-          }
-
-          p {
-            color: #444 !important;
-          }
-
-          button {
-            color: #fff !important;
+            background: #f9faff;
           }
         `}</style>
       </div>

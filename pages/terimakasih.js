@@ -1,61 +1,61 @@
-export default function TerimakasihPage({ pdf }) {
+export default function Terimakasih() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
         background: "#f3f4f6",
-        padding: 20,
+        minHeight: "100vh",
+        padding: "30px 12px",
       }}
     >
       <div
         style={{
-          maxWidth: 600,
+          maxWidth: "720px",
+          margin: "0 auto",
           background: "white",
-          padding: 24,
-          borderRadius: 10,
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
+          borderRadius: "12px",
+          padding: "28px",
+          textAlign: "center",
+          boxShadow: "0px 4px 20px rgba(0,0,0,0.08)",
         }}
       >
-        <h2 style={{ textAlign: "center", marginBottom: 20 }}>
-          Terima Kasih!
-        </h2>
+        <h2 style={{ marginBottom: "10px", color: "#111" }}>Terimakasih!</h2>
 
-        <p style={{ marginBottom: 20 }}>
-          Terima kasih telah mengisi Form Penerimaan.
-          <br />
-          Jika buku belum terunduh otomatis, silakan klik tombol di bawah:
+        <p style={{ fontSize: "18px", marginBottom: "20px", color: "#333" }}>
+          Terimakasih telah mengisi form penerimaan buku.
+        </p>
+
+        <p style={{ marginBottom: "30px", color: "#555" }}>
+          Anda dapat mendownload buku pada link di bawah ini:
         </p>
 
         <a
-          href={pdf}
+          href="/Buku-Advokasi-Inovasi.pdf"
           download
           style={{
-            display: "block",
-            textAlign: "center",
+            display: "inline-block",
             background: "#1d4ed8",
-            padding: 12,
-            borderRadius: 8,
             color: "white",
+            padding: "12px 25px",
+            borderRadius: "8px",
             textDecoration: "none",
-            fontWeight: "bold"
+            fontWeight: "600",
           }}
         >
-          Download Bukti Penerimaan
+          Download Buku
         </a>
+
+        <style>{`
+          :root { 
+            color-scheme: light !important; 
+          }
+
+          @media (max-width: 420px) {
+            div[style*="maxWidth:"] {
+              padding: 22px !important;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
-}
-
-export async function getServerSideProps(context) {
-  const { query } = context;
-
-  return {
-    props: {
-      pdf: query.pdf || ""
-    }
-  };
 }
