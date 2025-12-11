@@ -17,9 +17,10 @@ export default function AdminPanel() {
       });
   }, []);
 
+  // FIXED PDF DOWNLOAD — now sends ONLY { id, title }
   const downloadPDF = (index, item) => {
     const payload = {
-      id: index,
+      id: index,  
       title: "Ekonomi dan Kebijakan Perberasan di Negara Produsen Beras",
     };
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import SignatureCanvas from "react-signature-canvas";
 
 export default function Home() {
@@ -6,18 +6,7 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [telepon, setTelepon] = useState("");
   const [instansi, setInstansi] = useState("");
-  const [bookTitle, setBookTitle] = useState(""); 
   const sigRef = useRef(null);
-
-  // Load dynamic book title from server
-  useEffect(() => {
-    fetch("/book-settings.json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.title) setBookTitle(data.title);
-      })
-      .catch((err) => console.error("Failed loading book title:", err));
-  }, []);
 
   const handleReset = () => {
     sigRef.current.clear();
@@ -41,10 +30,10 @@ export default function Home() {
     });
 
     if (res.ok) {
-      window.location.href = "/terimakasih";
-    } else {
-      alert("Terjadi kesalahan, coba lagi.");
-    }
+    	window.location.href = "/terimakasih"; // Redirect after success
+ 	 } else {
+ 	   alert("Terjadi kesalahan, coba lagi.");
+ 	 }	
   };
 
   return (
@@ -72,10 +61,8 @@ export default function Home() {
         <h2 style={{ textAlign: "center", marginBottom: "5px" }}>
           Form Penerimaan Buku
         </h2>
-
-        {/* Dynamic Book Title */}
         <p style={{ textAlign: "center", marginBottom: "25px", fontSize: "18px" }}>
-          {bookTitle ? `"${bookTitle}"` : "Loading..."}
+          "Ekonomi dan Kebijakan Perberasan di Negara Produsen Beras"
         </p>
 
         {/* FORM FIELDS */}
@@ -141,19 +128,19 @@ export default function Home() {
           Reset Tanda Tangan
         </button>
 
-        {/* NOTE */}
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: "14px",
-            color: "#555",
-            marginTop: "5px",
-            marginBottom: "15px",
-            fontStyle: "italic",
-          }}
-        >
-          *Link Download Buku akan tersedia setelah submit form
-        </p>
+{/* NOTE */}
+<p
+  style={{
+    textAlign: "center",
+    fontSize: "14px",
+    color: "#555",
+    marginTop: "5px",
+    marginBottom: "15px",
+    fontStyle: "italic"
+  }}
+>
+  *Link Download Buku akan tersedia setelah submit form
+</p>
 
         {/* SUBMIT BUTTON */}
         <button
@@ -173,7 +160,7 @@ export default function Home() {
           Kirim
         </button>
 
-        {/* STYLE FIXES */}
+                {/* FIX MOBILE COLOR INVERSION */}
         <style>{`
           :root {
             color-scheme: light !important;
@@ -192,6 +179,22 @@ export default function Home() {
             border-radius: 5px;
             background: #f9faff !important;
             color: #222 !important;
+          }
+
+          label {
+            color: #333 !important;
+          }
+
+          h2 {
+            color: #222 !important;
+          }
+
+          p {
+            color: #444 !important;
+          }
+
+          button {
+            color: #fff !important;
           }
         `}</style>
       </div>

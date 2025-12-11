@@ -15,6 +15,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: "Missing id" });
     }
 
+    // Load stored data
     const dataPath = path.join(process.cwd(), "data.json");
     const all = JSON.parse(fs.readFileSync(dataPath));
     const item = all[id];
@@ -24,11 +25,11 @@ export default async function handler(req, res) {
     }
 
     const { nama, email, telepon, instansi, signature } = item;
-
     const signatureDataUrl = signature || null;
 
+    // Create A5 Landscape PDF
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595.28, 841.89]);
+    const page = pdfDoc.addPage([595.28, 420]); // A5 landscape
     const { width, height } = page.getSize();
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -49,46 +50,50 @@ export default async function handler(req, res) {
       console.warn("Logo failed to load:", err);
     }
 
-    let cursorY = height - 60;
+    let cursorY = height - 40;
 
+    // Draw centered logo
     if (logoImage) {
-      const maxWidth = 110;
+      const maxWidth = 80;
       const scale = maxWidth / logoImage.width;
+      const w = logoImage.width * scale;
+      const h = logoImage.height * scale;
 
       page.drawImage(logoImage, {
-        x: (width - logoImage.width * scale) / 2,
-        y: cursorY - (logoImage.height * scale) / 2,
-        width: logoImage.width * scale,
-        height: logoImage.height * scale,
+        x: (width - w) / 2,
+        y: cursorY - h,
+        width: w,
+        height: h,
       });
 
-      cursorY -= logoImage.height * scale + 10;
+      cursorY -= h + 15;
     }
 
+    // Centered titles
     const title1 = "PUSAT SOSIAL EKONOMI DAN KEBIJAKAN PERTANIAN";
     const title2 = "TANDA TERIMA";
 
     page.drawText(title1, {
-      x: 50,
-      y: cursorY - 30,
+      x: (width - fontBold.widthOfTextAtSize(title1, 14)) / 2,
+      y: cursorY -10,
       size: 14,
       font: fontBold,
     });
 
     page.drawText(title2, {
-      x: 50,
-      y: cursorY - 50,
+      x: (width - fontBold.widthOfTextAtSize(title2, 14)) / 2,
+      y: cursorY - 30,
       size: 14,
       font: fontBold,
     });
 
-    let y = cursorY - 100;
-    const gap = 22;
+    let y = cursorY - 60;
+    const gap = 18;
 
     function drawRow(label, value) {
       page.drawText(label, { x: 50, y, size: 11, font: fontBold });
-      page.drawText(":", { x: 260, y, size: 11, font });
-      page.drawText(value || "__________________", { x: 280, y, size: 11, font });
+      page.drawText(":", { x: 160, y, size: 11, font });
+      page.drawText(value || "-", { x: 180, y, size: 11, font });
       y -= gap;
     }
 
@@ -98,64 +103,60 @@ export default async function handler(req, res) {
     drawRow("No Telepon", telepon);
     drawRow("Email", email);
 
-    const rightX = 360;
-    const baseY = 200;
+    // --- SIGNATURE + DATE (lower-right quadrant) ---
 
+    // Date
     const today = new Date();
     const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
-    page.drawText("Tempat & Tanggal", {
-      x: rightX,
-      y: baseY + 140,
-      size: 11,
-      font: fontBold,
-    });
+    const sigX = width - 230;  // block anchor X
+    const centerWidth = 200;   // block width for centering
 
-    page.drawText(":", {
-      x: rightX + 120,
-      y: baseY + 140,
-      size: 11,
-      font,
-    });
-
+    // 1) DATE
     page.drawText(dateStr, {
-      x: rightX + 140,
-      y: baseY + 140,
+      x: sigX + (centerWidth - font.widthOfTextAtSize(dateStr, 11)) / 2,
+      y: 130,
       size: 11,
       font,
     });
 
-    page.drawText("Ttd", { x: rightX, y: baseY + 110, size: 11, font: fontBold });
-
+    // 2) SIGNATURE IMAGE
     if (signatureDataUrl) {
       const base64 = signatureDataUrl.split(",")[1];
       const sigBytes = Buffer.from(base64, "base64");
       const sigImg = await pdfDoc.embedPng(sigBytes);
 
-      const sigW = 160;
+      const sigW = 70;
       const sigH = (sigImg.height / sigImg.width) * sigW;
 
+      const sigImgX = sigX + (centerWidth - sigW) / 2;
+      const sigImgY = 70;
+
       page.drawImage(sigImg, {
-        x: rightX,
-        y: baseY,
+        x: sigImgX,
+        y: sigImgY,
         width: sigW,
         height: sigH,
       });
 
-      page.drawText(`(${nama})`, {
-        x: rightX + 10,
-        y: baseY - 16,
+      // 3) NAME UNDER SIGNATURE
+      const nameText = `(${nama})`;
+      page.drawText(nameText, {
+        x: sigX + (centerWidth - font.widthOfTextAtSize(nameText, 10)) / 2,
+        y: 60,
         size: 10,
         font,
       });
     }
 
+    // Output PDF
     const pdfBytes = await pdfDoc.save();
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="bukti-${nama}.pdf"`);
 
     return res.status(200).send(Buffer.from(pdfBytes));
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({
