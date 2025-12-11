@@ -8,40 +8,24 @@ export default function AdminPanel() {
       .then((res) => {
         if (res.status === 401) {
           window.location.href = "/admin/login";
-          return;
         }
         return res.json();
       })
-      .then((json) => {
-        if (Array.isArray(json)) setData(json);
-      });
+      .then(setData);
   }, []);
 
-  // FIXED PDF DOWNLOAD — now sends ONLY { id, title }
-  const downloadPDF = (index, item) => {
-    const payload = {
-      id: index,  
-      title: "Ekonomi dan Kebijakan Perberasan di Negara Produsen Beras",
-    };
-
+  const downloadPDF = (nama, dataItem) => {
     fetch("/api/admin/pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(dataItem),
     })
-      .then((res) => {
-        if (!res.ok) {
-          alert("Gagal membuat PDF");
-          return null;
-        }
-        return res.blob();
-      })
+      .then((res) => res.blob())
       .then((blob) => {
-        if (!blob) return;
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `bukti-${item.nama}.pdf`;
+        a.download = `bukti-${nama}.pdf`;
         a.click();
       });
   };
@@ -71,7 +55,7 @@ export default function AdminPanel() {
               <td>{item.instansi}</td>
               <td>{item.waktu}</td>
               <td>
-                <button onClick={() => downloadPDF(i, item)}>
+                <button onClick={() => downloadPDF(item.nama, item)}>
                   Download
                 </button>
               </td>

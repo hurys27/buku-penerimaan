@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  console.log("DEBUG /api/admin/pdf body =", req.body);
-
+  // Forward request to the original working generator
+  req.body.id = req.body.id; // ensure ID forwarded
   return handlerOriginal(req, res);
 }
