@@ -1,0 +1,350 @@
+import AdminLayout from "./layout";
+import { useEffect, useState } from "react";
+
+const page = {
+  padding: 20
+};
+
+export default function AdminPanel() {
+  const [data, setData] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+
+  const [search, setSearch] = useState("");
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const [page, setPage] = useState(1);
+  const perPage = 10;
+
+  // -------------------------------
+  // LOAD DATA
+  // -------------------------------
+  useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => {
+        if (res.status === 401) window.location.href = "/admin/login";
+        return res.json();
+      })
+      .then((d) => {
+        setData(d);
+        setFiltered(d);
+      });
+  }, []);
+
+  // -------------------------------
+  // SEARCH FUNCTION
+  // -------------------------------
+  useEffect(() => {
+    const s = search.toLowerCase();
+    const f = data.filter(
+      (x) =>
+        x.nama.toLowerCase().includes(s) ||
+        x.email.toLowerCase().includes(s) ||
+        x.instansi.toLowerCase().includes(s)
+    );
+    setFiltered(f);
+    setPage(1);
+  }, [search, data]);
+
+  // -------------------------------
+  // PAGINATION
+  // -------------------------------
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const pageData = filtered.slice((page - 1) * perPage, page * perPage);
+
+  // -------------------------------
+  // DOWNLOAD PDF
+  // -------------------------------
+  const downloadPDF = (index, item) => {
+    fetch("/api/admin/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: index }),
+    })
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `bukti-${item.nama}.pdf`;
+        a.click();
+      });
+  };
+
+  // -------------------------------
+  // EXPORT CSV
+  // -------------------------------
+  const exportCSV = () => {
+    let csv = "Nama,Email,Telepon,Instansi,Tanggal,Judul Buku\n";
+    filtered.forEach((x) => {
+      csv += `"${x.nama}","${x.email}","${x.telepon}","${x.instansi}","${x.waktu}","${x.bookTitle || "-"}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "data-store.csv";
+    a.click();
+  };
+
+  // -------------------------------
+  // DELETE RANGE
+  // -------------------------------
+  const deleteRange = async () => {
+    if (!startDate || !endDate) return alert("Isi tanggal mulai & tanggal sampai.");
+
+    if (!confirm("Hapus data dalam rentang tanggal ini?")) return;
+
+    const res = await fetch("/api/admin/delete-range", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start: startDate, end: endDate }),
+    });
+
+    if (res.ok) {
+      alert("Berhasil menghapus data.");
+      location.reload();
+    }
+  };
+
+  // -------------------------------
+  // DELETE ALL
+  // -------------------------------
+  const deleteAll = async () => {
+    if (!confirm("Yakin ingin menghapus SEMUA data?")) return;
+
+    const res = await fetch("/api/admin/delete-all", { method: "POST" });
+
+    if (res.ok) {
+      alert("Semua data dihapus.");
+      location.reload();
+    }
+  };
+
+  return (
+    <AdminLayout>
+    <div style={page}>
+      <h2 style={{marginBottom: "20px"}}>📄 Data Stored</h2>
+
+      {/* SEARCH BAR + EXPORT BUTTON */}
+      <div className="top-controls">
+        <input
+          type="text"
+          placeholder="Cari nama, email, instansi..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="search"
+        />
+
+        <button className="btn-green" onClick={exportCSV}>
+          ⬇ Export CSV
+        </button>
+      </div>
+
+      {/* TABLE */}
+      <div className="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Telepon</th>
+              <th>Instansi</th>
+              <th>Tanggal</th>
+              <th>Judul Buku</th>
+              <th>PDF</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {pageData.map((item, i) => (
+              <tr key={i}>
+                <td>{item.nama}</td>
+                <td>{item.email}</td>
+                <td>{item.telepon}</td>
+                <td>{item.instansi}</td>
+                <td>{item.waktu}</td>
+                <td>{item.bookTitle || "-"}</td>
+                <td>
+                  <button
+                    className="btn-blue"
+                    onClick={() => downloadPDF((page - 1) * perPage + i, item)}
+                  >
+                    Download
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="pagination">
+        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+          ◀ Prev
+        </button>
+
+        <span>
+          Page {page} of {totalPages}
+        </span>
+
+        <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+          Next ▶
+        </button>
+      </div>
+
+      {/* DANGER ZONE */}
+      <h3 className="danger-title">⚠ Danger Zone</h3>
+
+      <div className="danger-row">
+        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <span>sampai</span>
+        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+
+        <button className="btn-orange" onClick={deleteRange}>🗑 Delete Range</button>
+
+        <button className="btn-red-small" onClick={deleteAll}>Delete ALL Data</button>
+      </div>
+
+      {/* Inject Styles */}
+      <style>{styles}</style>
+    
+</AdminLayout>
+  );
+}
+
+/* ---------------- CSS ---------------- */
+
+const styles = `
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-top: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+table th {
+  background: #1e3a8a;
+  color: white;
+  padding: 10px;
+}
+
+table td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+table tbody tr:nth-child(odd) {
+  background: #f9fafb;
+}
+
+table tbody tr:hover {
+  background: #e0f2fe;
+}
+
+.btn-blue {
+  background: #2563eb;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-green {
+  background: #16a34a;
+  color: white;
+  padding: 7px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-orange {
+  background: #ea580c;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-red-small {
+  background: #dc2626;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.search {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination button {
+  background: #ddd;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.danger-title {
+  margin-top: 30px;
+  color: #b91c1c;
+}
+
+.danger-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.danger-row input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .danger-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+`;

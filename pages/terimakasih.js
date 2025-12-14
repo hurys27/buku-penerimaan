@@ -1,62 +1,52 @@
 import { useEffect, useState } from "react";
 
-export default function Terimakasih() {
-  const [book, setBook] = useState(null);
+export default function TerimaKasih() {
+  const [link, setLink] = useState("");
 
   useEffect(() => {
-    fetch("/api/book-info")
-      .then((res) => res.json())
-      .then((data) => setBook(data));
+    fetch("/api/admin/book-settings")
+      .then(res => res.json())
+      .then(data => setLink(data.downloadUrl || ""));
   }, []);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f3f4f6",
-        paddingTop: "80px",
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#f3f4f6"
+    }}>
+      <div style={{
+        background: "#fff",
+        padding: 30,
+        borderRadius: 10,
         textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          width: "400px",
-          margin: "0 auto",
-          padding: "30px",
-          borderRadius: "12px",
-          boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-        }}
-      >
+        boxShadow: "0 4px 10px rgba(0,0,0,.1)"
+      }}>
         <h2>Terimakasih!</h2>
         <p>Terimakasih telah mengisi form.</p>
+        <p>Klik link di bawah untuk mengunduh buku:</p>
 
-        {/* Show download link when ready */}
-        {book ? (
-          <div style={{ marginTop: "25px" }}>
-            <p>
-              Klik link di bawah untuk mengunduh buku:
-            </p>
-	    <p> </p>
-
-            <a
-              href={`/books/${book.file}`}
-              download
-              style={{
-                display: "inline-block",
-                padding: "10px 20px",
-                background: "#1d4ed8",
-                color: "white",
-                borderRadius: "6px",
-                fontWeight: "bold",
-                textDecoration: "none",
-              }}
-            >
-              Download Buku
-            </a>
-          </div>
+        {link ? (
+          <a
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-block",
+              marginTop: 12,
+              background: "#2563eb",
+              color: "#fff",
+              padding: "10px 16px",
+              borderRadius: 6,
+              textDecoration: "none"
+            }}
+          >
+            Download Buku
+          </a>
         ) : (
-          <p>Sedang memuat link buku...</p>
+          <p>Link tidak tersedia</p>
         )}
       </div>
     </div>

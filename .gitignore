@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# runtime data / user generated
+data.json
+email-history.json
+public/email-database.json
+sender-settings.json
+book-settings.json
+sig_last.png

@@ -11,7 +11,7 @@ export default function Home() {
 
   // Load dynamic book title from server
   useEffect(() => {
-    fetch("/book-settings.json")
+    fetch("/api/admin/book-settings")
       .then((res) => res.json())
       .then((data) => {
         if (data?.title) setBookTitle(data.title);

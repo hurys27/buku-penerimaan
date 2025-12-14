@@ -1,72 +1,32 @@
-import { useState, useEffect } from "react";
+import fs from "fs";
+import path from "path";
 
-export default function BookSettings() {
-  const [title, setTitle] = useState("");
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
+const BOOK_PATH = path.join(process.cwd(), "book-settings.json");
 
-  useEffect(() => {
-    fetch("/book.json")
-      .then(res => res.json())
-      .then(data => setTitle(data.title));
-  }, []);
-
-  const submitForm = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("title", title);
-    if (file) formData.append("bookfile", file);
-
-    const res = await fetch("/api/admin/book", {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await res.json();
-    if (result.success) {
-      setMessage("Berhasil diperbarui!");
-    } else {
-      setMessage("Gagal update.");
+export default function handler(req, res) {
+  if (req.method === "GET") {
+    if (!fs.existsSync(BOOK_PATH)) {
+      return res.json({ title: "", downloadUrl: "" });
     }
-  };
+    const data = JSON.parse(fs.readFileSync(BOOK_PATH, "utf8"));
+    return res.json(data);
+  }
 
-  return (
-    <div style={{ padding: 20 }}>
-      <h2>Book Settings</h2>
+  if (req.method === "POST") {
+    const { title, downloadUrl } = req.body || {};
 
-      <form onSubmit={submitForm}>
-        <label>Judul Buku:</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ width: "100%", padding: 8, marginBottom: 20 }}
-        />
+    if (!downloadUrl) {
+      return res.status(400).json({ message: "Download URL required" });
+    }
 
-        <label>Upload PDF Baru (optional):</label>
-        <input
-          type="file"
-          accept="application/pdf"
-          onChange={(e) => setFile(e.target.files[0])}
-          style={{ marginBottom: 20 }}
-        />
+    const payload = {
+      title: title || "",
+      downloadUrl
+    };
 
-        <button
-          type="submit"
-          style={{
-            padding: "10px 20px",
-            background: "#1d4ed8",
-            color: "white",
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer"
-          }}
-        >
-          Simpan
-        </button>
-      </form>
+    fs.writeFileSync(BOOK_PATH, JSON.stringify(payload, null, 2), "utf8");
+    return res.json({ ok: true });
+  }
 
-      {message && <p style={{ marginTop: 20 }}>{message}</p>}
-    </div>
-  );
+  return res.status(405).json({ message: "Method not allowed" });
 }

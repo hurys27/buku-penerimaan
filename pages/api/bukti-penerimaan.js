@@ -9,13 +9,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { id, title } = req.body;
+    const { id } = req.body;
 
     if (id === undefined) {
       return res.status(400).json({ message: "Missing id" });
     }
 
-    // Load stored data
+    // -----------------------------------------
+    // ✅ Load stored form data (including bookTitle)
+    // -----------------------------------------
     const dataPath = path.join(process.cwd(), "data.json");
     const all = JSON.parse(fs.readFileSync(dataPath));
     const item = all[id];
@@ -24,10 +26,12 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: "Data not found" });
     }
 
-    const { nama, email, telepon, instansi, signature } = item;
+    const { nama, email, telepon, instansi, signature, bookTitle } = item;
     const signatureDataUrl = signature || null;
 
-    // Create A5 Landscape PDF
+    // -----------------------------------------
+    // 📄 Create A5 Landscape PDF
+    // -----------------------------------------
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 420]); // A5 landscape
     const { width, height } = page.getSize();
@@ -35,7 +39,9 @@ export default async function handler(req, res) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Load logo
+    // -----------------------------------------
+    // 🖼 Load Logo
+    // -----------------------------------------
     let logoImage = null;
     try {
       const protocol = req.headers["x-forwarded-proto"] || "http";
@@ -69,13 +75,15 @@ export default async function handler(req, res) {
       cursorY -= h + 15;
     }
 
-    // Centered titles
+    // ---------------------------------------------------
+    // 🏛 Title block
+    // ---------------------------------------------------
     const title1 = "PUSAT SOSIAL EKONOMI DAN KEBIJAKAN PERTANIAN";
     const title2 = "TANDA TERIMA";
 
     page.drawText(title1, {
       x: (width - fontBold.widthOfTextAtSize(title1, 14)) / 2,
-      y: cursorY -10,
+      y: cursorY - 10,
       size: 14,
       font: fontBold,
     });
@@ -97,22 +105,26 @@ export default async function handler(req, res) {
       y -= gap;
     }
 
-    drawRow("Judul Buku", title || "-");
+    // ---------------------------------------------------
+    // 🔥 Book title from datastore (NOT from settings.json)
+    // ---------------------------------------------------
+    drawRow("Judul Buku", bookTitle || "-");
+
     drawRow("Penerima", nama);
     drawRow("Instansi", instansi);
     drawRow("No Telepon", telepon);
     drawRow("Email", email);
 
-    // --- SIGNATURE + DATE (lower-right quadrant) ---
-
-    // Date
+    // ---------------------------------------------------
+    // ✍ Signature (bottom right)
+    // ---------------------------------------------------
     const today = new Date();
     const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
-    const sigX = width - 230;  // block anchor X
-    const centerWidth = 200;   // block width for centering
+    const sigX = width - 230;
+    const centerWidth = 200;
 
-    // 1) DATE
+    // Date above signature
     page.drawText(dateStr, {
       x: sigX + (centerWidth - font.widthOfTextAtSize(dateStr, 11)) / 2,
       y: 130,
@@ -120,7 +132,6 @@ export default async function handler(req, res) {
       font,
     });
 
-    // 2) SIGNATURE IMAGE
     if (signatureDataUrl) {
       const base64 = signatureDataUrl.split(",")[1];
       const sigBytes = Buffer.from(base64, "base64");
@@ -139,7 +150,6 @@ export default async function handler(req, res) {
         height: sigH,
       });
 
-      // 3) NAME UNDER SIGNATURE
       const nameText = `(${nama})`;
       page.drawText(nameText, {
         x: sigX + (centerWidth - font.widthOfTextAtSize(nameText, 10)) / 2,
@@ -149,14 +159,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // Output PDF
+    // ---------------------------------------------------
+    // 📤 Output PDF
+    // ---------------------------------------------------
     const pdfBytes = await pdfDoc.save();
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="bukti-${nama}.pdf"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="bukti-${nama}.pdf"`
+    );
 
     return res.status(200).send(Buffer.from(pdfBytes));
-
   } catch (err) {
     console.error(err);
     return res.status(500).json({

@@ -1,0 +1,60 @@
+import { useEffect, useState } from "react";
+
+export default function Terimakasih() {
+  const [book, setBook] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/book-info")
+      .then(res => res.json())
+      .then(data => {
+        console.log("BOOK LOADED:", data);
+        setBook(data);
+      })
+      .catch(err => console.error("Error loading book info:", err));
+  }, []);
+
+  return (
+    <div style={{ background: "#f3f4f6", minHeight: "100vh", padding: "40px 0" }}>
+      <div
+        style={{
+          maxWidth: "600px",
+          margin: "0 auto",
+          background: "white",
+          borderRadius: "12px",
+          padding: "35px",
+          textAlign: "center",
+          boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h2>Terimakasih!</h2>
+        
+<p>Terimakasih telah mengisi form.</p>
+	<p></p>
+	<p style={{ margin: "10px" }}>
+          Anda dapat mendownload buku pada link di bawah ini:
+        </p>
+
+        {!book && <p>Memuat...</p>}
+
+        {book && (
+          <a
+            href={`/books/${encodeURIComponent(book.file)}`}
+            download
+            style={{
+              display: "inline-block",
+              padding: "10px 22px",
+              background: "#1d4ed8",
+              color: "white",
+              borderRadius: "6px",
+              textDecoration: "none",
+              fontWeight: "bold",
+              marginTop: "10px"
+            }}
+          >
+            Download Buku
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
